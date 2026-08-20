@@ -1,10 +1,10 @@
 import express from "express";
 import cors from "cors";
 // import axios from "axios";
-// import pool from "./config/db.ts";
-import productRoutes from "./routes/product.routes.ts";
-import { snatch } from "./controllers/products.ts";
-import categoryRoutes from "./routes/category.routes.ts"
+import pool from "./config/db.js";
+import productRoutes from "./routes/product.routes.js";
+import { snatch } from "./controllers/products.js";
+import categoryRoutes from "./routes/category.routes.js"
 import type { Request, Response } from "express";
 // import type { DummyJson } from "./types/products.ts";
 
@@ -25,22 +25,23 @@ app.get("/", (req: Request, res: Response) => {
 
 app.use("/api", productRoutes);
 
-/* app.get("/api/products/:id", async (req: Request, res: Response) => {
+app.use("/api", categoryRoutes);
+
+app.get("/api/categories/:category", async (req: Request, res: Response) => {
     try {
-        const id = req.params.id;
-        const productData = await pool.query(
-            "SELECT *, i.image_url FROM products p INNER JOIN images i ON p.id = i.product_id WHERE p.id = $1", [id]
+        const { category } = req.params;
+
+        const { rows } = await pool.query(
+            "SELECT * FROM products p INNER JOIN images i ON i.product_id = p.id WHERE $1 = ANY(category)", [category]
         );
-        if (productData.rows.length === 0) return res.status(404).json({ error: "Product not found" })
-        const product = productData.rows[0];
-        res.status(200).json(product)
+        if (rows.length === 0) return res.status(404).json({ error: "Couldn't list categories" });
+
+        res.status(200).json(rows)
     } catch (err) {
-        console.error("Couldn't fetch product data:", err);
+        console.error("Couldn't get category:", err);
         res.status(500).json({ error: "Internal server error" })
     }
-}); */
-
-app.use("/api", categoryRoutes)
+})
 
 app.get("/api/do_not_snatch", snatch)
 

@@ -1,4 +1,4 @@
-import { getRates } from "../helpers/exchangeRate.ts";
+import { getRates } from "../helpers/exchangeRate.js";
 
 export async function formatCurrency(amount: number) {
     const response = await getRates();

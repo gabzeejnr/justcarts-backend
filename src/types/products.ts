@@ -7,7 +7,7 @@ export interface SeedProduct {
 }
 
 
-interface DummyReview {
+interface Review {
     rating: 1 | 2 | 3 | 4 | 5,
     comment: string,
     date: string,
@@ -16,6 +16,7 @@ interface DummyReview {
 }
 
 export interface DummyJson {
+    id: number | string,
     title: string,
     description: string,
     category: string,
@@ -23,14 +24,15 @@ export interface DummyJson {
     discountPercentage?: number,
     rating: number,
     stock: number,
-    tags: string[],
-    brand: string,
+    tags?: string[],
+    brand?: string,
     warrantyInformation?: string,
     shippingInformation?: string,
     availabilityStatus: string,
-    reviews: DummyReview[],
+    reviews: Review[],
     returnPolicy?: string,
     minimumOrderQuantity?: number,
     images: string[],
-    thumbnail?: string
+    thumbnail?: string,
+    meta?: string[]
 }
