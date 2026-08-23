@@ -13,20 +13,21 @@ export async function allCategories(req: Request, res: Response) {
     } catch (err) {
         console.error("Couldn't get categories:", err);
         res.status(500).json({ error: "Internal server error" })
-    }
-}
+    };
+};
 
-/* export async function getCategory(req: Request, res: Response) {
-    // const id = req.params.id
+export async function getCategory(req: Request, res: Response) {
     try {
+        const { category } = req.params;
+
         const { rows } = await pool.query(
-            "SELECT DISTINCT category FROM products ORDER BY category ASC"
-        )
+            "SELECT * FROM products p INNER JOIN images i ON i.product_id = p.id WHERE $1 = ANY(category)", [category]
+        );
         if (rows.length === 0) return res.status(404).json({ error: "Couldn't list categories" });
 
-        res.status(200).json(rows.map(row => row.category))
+        res.status(200).json(rows)
     } catch (err) {
         console.error("Couldn't get category:", err);
         res.status(500).json({ error: "Internal server error" })
-    }
-} */
+    };
+};

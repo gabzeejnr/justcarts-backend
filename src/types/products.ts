@@ -19,7 +19,7 @@ export interface DummyJson {
     id: number | string,
     title: string,
     description: string,
-    category: string,
+    category: string[],
     price: number,
     discountPercentage?: number,
     rating: number,

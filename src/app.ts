@@ -1,12 +1,18 @@
+import "dotenv/config";
 import express from "express";
 import cors from "cors";
-// import axios from "axios";
 import pool from "./config/db.js";
+// import bcrypt from "bcrypt";
+// import jwt from "jsonwebtoken";
+// import { JWT_SECRET } from "./config/env.js";
+import userAuth from "./routes/auth.routes.js";
 import productRoutes from "./routes/product.routes.js";
-import { snatch } from "./controllers/products.js";
 import categoryRoutes from "./routes/category.routes.js"
+import { snatch } from "./controllers/products.js";
+// import { sendRegistrationCode } from "./helpers/mailSender.js";
+// import { generateOtp } from "./helpers/codeGenerator.js";
 import type { Request, Response } from "express";
-// import type { DummyJson } from "./types/products.ts";
+// import type { RegisterUser } from "./types/auth.js";
 
 const app = express();
 app.use(cors());
@@ -19,36 +25,41 @@ console.log(`// ================================================================
 // ================================================================================================`)
 
 app.get("/", (req: Request, res: Response) => {
-    res.send("Working??")
-})
+    res.send("Root directory... Working??")
+});
 
+app.post("/api", userAuth);
+
+app.post("/api/auth/send_registration_code", async(req:Request, res: Response) => {
+    
+})
 
 app.use("/api", productRoutes);
 
 app.use("/api", categoryRoutes);
 
-app.get("/api/categories/:category", async (req: Request, res: Response) => {
+app.get("/api/query/:query", async (req: Request, res: Response) => {
+    console.log("Is this running?")
     try {
-        const { category } = req.params;
-
+        const { query } = req.params;
+        console.log(query);
         const { rows } = await pool.query(
-            "SELECT * FROM products p INNER JOIN images i ON i.product_id = p.id WHERE $1 = ANY(category)", [category]
+            "SELECT *, i.image FROM products p INNER JOIN images i ON i.product_id = p.id WHERE ANY(p.category) = $1", [[query]]
         );
-        if (rows.length === 0) return res.status(404).json({ error: "Couldn't list categories" });
-
-        res.status(200).json(rows)
+        console.log(query);
+        res.status(200).json(rows);
     } catch (err) {
-        console.error("Couldn't get category:", err);
-        res.status(500).json({ error: "Internal server error" })
-    }
-})
+        console.error("Error at:", err);
+        res.status(500).json({ error: "Internal server error" });
+    };
+});
 
-app.get("/api/do_not_snatch", snatch)
 
+app.get("/api/do_not_snatch", snatch);
 
 app.listen(PORT, () => {
     console.log("Running on port", PORT)
     console.log(`// ================================================================================================
 // ENDPOINT =======================================================================================
 // ================================================================================================`)
-})
+});

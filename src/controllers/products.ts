@@ -3,11 +3,12 @@ import axios from "axios";
 import type { Request, Response } from "express";
 import type { DummyJson } from "../types/products.ts";
 import { changeDot } from "../utils/functions.js";
+import cloudinary from "../config/cloudinary.js";
 
 export async function getAllProducts(req: Request, res: Response) {
     try {
         const { rows } = await pool.query(
-            "SELECT *, i.image_url FROM products p INNER JOIN images i ON p.id = i.product_id"
+            "SELECT *, i.image FROM products p INNER JOIN images i ON p.id = i.product_id"
         )
         if (rows.length === 0) return res.status(404).json({ error: "Couldn't get resources" });
 
@@ -22,7 +23,7 @@ export async function getProduct(req: Request, res: Response) {
     try {
         const { id } = req.params;
         const { rows } = await pool.query(
-            "SELECT *, i.image_url FROM products p INNER JOIN images i ON p.id = i.product_id WHERE p.id = $1", [id]
+            "SELECT *, i.image FROM products p INNER JOIN images i ON p.id = i.product_id WHERE p.id = $1", [id]
         );
         if (rows.length === 0) return res.status(404).json({ error: "Product not found" })
         const product = rows[0];
@@ -39,9 +40,13 @@ export async function snatch(req: Request, res: Response) {
     const MAX_ITERATIONS = 200;
     let iterations = 0;
 
-    const failures: { snatchId: number | string; reason: string }[] = [];
+    const failures: {
+        snatchId: number | string;
+        reason: string
+    }[] = [];
     let skippedCount = 0;
     let insertedCount = 0;
+    let totalImageFailures = 0;
 
     try {
         while (true) {
@@ -73,28 +78,47 @@ export async function snatch(req: Request, res: Response) {
                     const { rows } = await client.query(
                         `INSERT INTO products (source, snatch_id, name, description, category, price, rating, warranty_info, shipping_info, availability, return_policy, minimum_orderQuantity)
                         VALUES($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
-                        ON CONFLICT (source, snatch_id) DO NOTHING 
-                        RETURNING id`,
-                        [changeDot(url), typeId, title, description, category, price, rating, warrantyInformation, shippingInformation, availabilityStatus, returnPolicy, minimumOrderQuantity]
+                        ON CONFLICT (source, snatch_id) DO UPDATE SET snatch_id = EXCLUDED.snatch_id
+                        RETURNING id, images_synced`,
+                        [changeDot(url), typeId, title, description, [category],
+                            price, rating, warrantyInformation, shippingInformation,
+                            availabilityStatus, returnPolicy, minimumOrderQuantity
+                        ]
                     );
-                    if (rows.length === 0) {
-                        console.log(`Skipped ${skip + index + 1} (already exists)`);
+                    const productId = rows[0].id;
+                    const alreadySynced = rows[0].images_synced;
+                    if (alreadySynced) {
+                        console.log(`Skipped ${skip + index + 1} (already fully synced)`);
                         await client.query("COMMIT");
                         skippedCount++;
                         continue;
                     }
-                    const productId = rows[0].id;
+                    await client.query("DELETE FROM images WHERE product_id = $1", [productId])
 
+                    let imageFailureCount = 0;
                     if (Array.isArray(images) && images.length > 0) {
                         await Promise.all(
-                            images.map((imageUrl: string) => (
-                                client.query(
-                                    "INSERT INTO images (product_id, image_url) VALUES ($1, $2)",
-                                    [productId, imageUrl]
-                                )
-                            ))
+                            images.map(async (imageUrl: string) => {
+                                try {
+                                    const uploadResult = await cloudinary.uploader.upload(imageUrl, {
+                                        folder: `justcarts/products/${changeDot(url)}`
+                                    })
+                                    await client.query(
+                                        "INSERT INTO images (product_id, image) VALUES ($1, $2)",
+                                        [productId, uploadResult.secure_url]
+                                    )
+                                } catch (err) {
+                                    imageFailureCount++;
+                                    const reason = err instanceof Error ? err.message : String(err);
+                                    console.error(`Image upload failed for ${imageUrl} (product ${productId}): ${reason}`);
+                                }
+                            })
                         )
                     }
+                    totalImageFailures += imageFailureCount;
+
+                    const fullySynced = images.length === 0 || imageFailureCount === 0;
+                    await client.query("UPDATE products SET images_synced = $1 WHERE id = $2", [fullySynced, productId]);
 
                     await client.query("COMMIT");
                     insertedCount++;
@@ -121,7 +145,8 @@ export async function snatch(req: Request, res: Response) {
             inserted: `${insertedCount} images`,
             skipped: skippedCount > 0 ? `${skippedCount} images` : skippedCount,
             failed: failures.length,
-            failures
+            failures,
+            imageFailures: totalImageFailures
         })
     } catch (err) {
         console.error("There was an error:", err);

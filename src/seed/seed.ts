@@ -5,15 +5,21 @@ async function createTables() {
 
     const client = await pool.connect();
     try {
+
+        await client.query("DROP TABLE IF EXISTS images CASCADE;");
+        await client.query("DROP TABLE IF EXISTS products CASCADE;");
+        console.log("Old tables dropped cleanly (if they existed)");
+
         await client.query("BEGIN");
         await client.query(
             `CREATE TABLE products (
                 id SERIAL PRIMARY KEY,
         		snatch_id INTEGER,
                 source VARCHAR(50) NOT NULL DEFAULT 'gabzeejnr',
+                images_synced BOOLEAN NOT NULL DEFAULT false,
                 name VARCHAR(255) NOT NULL,
                 description TEXT NOT NULL,
-                category TEXT NOT NULL,
+                category TEXT[] NOT NULL,
                 price NUMERIC(12, 2),
 		        currency TEXT DEFAULT 'USD',
                 rating NUMERIC NOT NULL DEFAULT 0,
@@ -24,17 +30,18 @@ async function createTables() {
                 minimum_orderQuantity NUMERIC
             )`
         )
-        /* if (!productsTable) {
-            console.error("Couldn't create products table");
-            return;
-        } */
         console.log("Products table created");
+
+        await client.query(
+            "ALTER TABLE products ADD CONSTRAINT unique_source_snatch UNIQUE (source, snatch_id)"
+        );
+        console.log("Constraint added to product table");
 
         await client.query(
             `CREATE TABLE images (
                 id SERIAL PRIMARY KEY,
                 product_id INTEGER NOT NULL REFERENCES products (id),
-                image_url TEXT
+                image TEXT
             )`
         )
 
@@ -58,6 +65,10 @@ async function seed() {
             try {
                 const { name, description, category, price, imageUrl } = product;
 
+                const categoryArray = Array.isArray(category)
+                    ? category
+                    : [category];
+
                 const check = await client.query(
                     "SELECT * FROM products WHERE name = $1", [name]
                 )
@@ -66,14 +77,14 @@ async function seed() {
                     await client.query("ROLLBACK");
                     continue;
                 }
-                const {rows} = await pool.query(
+                const { rows } = await client.query(
                     "INSERT INTO products (name, description, category, price) VALUES($1, $2, $3, $4) RETURNING id",
-                    [name, description, category, price]
+                    [name, description, categoryArray, price]
                 );
                 const productId = rows[0].id
 
-                await pool.query(
-                    "INSERT INTO images (product_id, image_url) VALUES ($1, $2) RETURNING id", [productId, imageUrl]
+                await client.query(
+                    "INSERT INTO images (product_id, image) VALUES ($1, $2) RETURNING id", [productId, imageUrl]
                 );
 
                 await client.query("COMMIT")
