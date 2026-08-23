@@ -5,10 +5,10 @@ import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
 import { checkStrength } from "../helpers/passwordValidation.js";
 import { generateOtp } from "../helpers/codeGenerator.js";
-import { sendRegistrationCode } from "../helpers/mailSender.js";
+// import { sendRegistrationCode } from "../helpers/mailSender.js";
 import type { Request, Response } from "express";
 import type { RegisterUser, OtpToken } from "../types/auth.js";
-import { getTokenFromHeader } from "../helpers/token.js";
+// import { getTokenFromHeader } from "../helpers/token.js";
 
 export async function registerUser(req: Request, res: Response) {
     const client = await pool.connect()
@@ -71,58 +71,58 @@ export async function registerUser(req: Request, res: Response) {
     }
 }
 
-export async function sendOtp(req: Request, res: Response) {
-    const client = await pool.connect();
-    try {
-        const regToken = getTokenFromHeader(req);
-        let payload: { userId: number; purpose: string };
-        try {
-            payload = jwt.verify(regToken, JWT_SECRET)
-        } catch {
-            return res.status(401).json({ error: "Invalid or expired session. Please register again." });
-        }
-        const { userId, purpose } = payload;
+// export async function sendOtp(req: Request, res: Response) {
+//     const client = await pool.connect();
+//     try {
+//         const regToken = getTokenFromHeader(req);
+//         let payload: { userId: number; purpose: string };
+//         try {
+//             payload = jwt.verify(regToken, JWT_SECRET)
+//         } catch {
+//             return res.status(401).json({ error: "Invalid or expired session. Please register again." });
+//         }
+//         const { userId, purpose } = payload;
 
-        const recent = await client.query(
-            "SELECT created_at FROM codes WHERE user_id = $1 AND purpose = $2 ORDER BY created_at DESC LIMIT 1", [userId, purpose]
-        )
-        if (recent.rows.length > 0) {
-            const secondsSince = (Date.now() - new Date(recent.rows[0].created_at).getTime()) / 1000;
-            if (secondsSince < 30) {
-                return res.status(429).json({ error: "Please wait before requesting another code." });
-            }
-        }
+//         const recent = await client.query(
+//             "SELECT created_at FROM codes WHERE user_id = $1 AND purpose = $2 ORDER BY created_at DESC LIMIT 1", [userId, purpose]
+//         )
+//         if (recent.rows.length > 0) {
+//             const secondsSince = (Date.now() - new Date(recent.rows[0].created_at).getTime()) / 1000;
+//             if (secondsSince < 30) {
+//                 return res.status(429).json({ error: "Please wait before requesting another code." });
+//             }
+//         }
 
-        const code = generateOtp();
+//         const code = generateOtp();
 
-        await client.query("BEGIN");
-        await client.query("DELETE FROM codes WHERE user_id = $1 AND purpose = $2", [userId, purpose]);
-        await client.query(
-            "INSERT INTO codes(user_id, code, purpose, expires_at) VALUES($1, $2, $3, NOW() + '10m')",
-            [userId, code, purpose]
-        );
-        await client.query("COMMIT");
+//         await client.query("BEGIN");
+//         await client.query("DELETE FROM codes WHERE user_id = $1 AND purpose = $2", [userId, purpose]);
+//         await client.query(
+//             "INSERT INTO codes(user_id, code, purpose, expires_at) VALUES($1, $2, $3, NOW() + '10m')",
+//             [userId, code, purpose]
+//         );
+//         await client.query("COMMIT");
 
-        const userRes = await client.query("SELECT email FROM users WHERE id = $1", [userId]);
-        const email = userRes.rows[0]?.email;
-        if (!email) return res.status(404).json({ error: "User not found." });
+//         const userRes = await client.query("SELECT email FROM users WHERE id = $1", [userId]);
+//         const email = userRes.rows[0]?.email;
+//         if (!email) return res.status(404).json({ error: "User not found." });
 
-        try {
-            await sendRegistrationCode(email, code)
-        } catch (err) {
-            console.error("OTP email failed to send:", err);
-            return res.status(502).json({ error: "Couldn't send code. Please try again. " })
-        }
+//         try {
+//             await sendRegistrationCode(email, code)
+//         } catch (err) {
+//             console.error("OTP email failed to send:", err);
+//             return res.status(502).json({ error: "Couldn't send code. Please try again. " })
+//         }
 
-        return res.status(200).json({ message: "Code sent successfully" })
-    } catch (err) {
-        await client.query("ROLLBACK");
-        console.error("Couldn't send OTP:", err);
-        res.status(500).json({ error: "Internal server error. Try again" })
-    } finally {
-        client.release();
-    }
-}
+//         return res.status(200).json({ message: "Code sent successfully" })
+//     } catch (err) {
+//         await client.query("ROLLBACK");
+//         console.error("Couldn't send OTP:", err);
+//         res.status(500).json({ error: "Internal server error. Try again" })
+//     } finally {
+//         client.release();
+//     }
+// }
 
 export async function otpVerification(req: Request, res: Response) {
     try {
