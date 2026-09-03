@@ -1,11 +1,11 @@
-export interface RegisterUser {
-    name: string,
-    email: string,
-    password: string,
-    confirmPassword: string
-}
+import type { JwtPayload } from "jsonwebtoken"
 
 export interface OtpToken {
     otp: string,
-    regToken: string
+    otpToken: string | JwtPayload
+}
+
+export interface LoginRequest {
+    email: string,
+    password: string
 }

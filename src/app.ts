@@ -1,6 +1,7 @@
 import "dotenv/config";
 import express from "express";
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import pool from "./config/db.js";
 // import bcrypt from "bcrypt";
 // import jwt from "jsonwebtoken";
@@ -8,15 +9,16 @@ import pool from "./config/db.js";
 import userAuth from "./routes/auth.routes.js";
 import productRoutes from "./routes/product.routes.js";
 import categoryRoutes from "./routes/category.routes.js"
-import { snatch } from "./controllers/products.js";
-// import { sendRegistrationCode } from "./helpers/mailSender.js";
-// import { generateOtp } from "./helpers/codeGenerator.js";
+import { snatch } from "./controllers/products.controller.js";
 import type { Request, Response } from "express";
-// import type { RegisterUser } from "./types/auth.js";
 
 const app = express();
-app.use(cors());
-app.use(express.json())
+app.use(cors({
+    origin: "http://localhost:5173",
+    credentials: true
+}));
+app.use(cookieParser());
+app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
 
@@ -28,11 +30,15 @@ app.get("/", (req: Request, res: Response) => {
     res.send("Root directory... Working??")
 });
 
-app.post("/api", userAuth);
+app.use("/api", userAuth);
 
-app.post("/api/auth/send_registration_code", async(req:Request, res: Response) => {
-    
+app.get("/api/users", async (req: Request, res: Response) => {
+    const { rows } = await pool.query("SELECT * FROM users");
+
+    res.status(200).json(rows)
 })
+
+// app.post("/api/auth/send_registration_code", )
 
 app.use("/api", productRoutes);
 

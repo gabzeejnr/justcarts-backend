@@ -1,7 +1,7 @@
 import pool from "../config/db.js";
 import axios from "axios";
 import type { Request, Response } from "express";
-import type { DummyJson } from "../types/products.ts";
+import type { DummyJson } from "../types/products.js";
 import { changeDot } from "../utils/functions.js";
 import cloudinary from "../config/cloudinary.js";
 
