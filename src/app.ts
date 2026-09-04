@@ -21,6 +21,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
+console.log(await pool.query("SELECT * FROM codes"))
 
 console.log(`// ================================================================================================
 // RUNNING ========================================================================================
@@ -37,8 +38,6 @@ app.get("/api/users", async (req: Request, res: Response) => {
 
     res.status(200).json(rows)
 })
-
-// app.post("/api/auth/send_registration_code", )
 
 app.use("/api", productRoutes);
 
