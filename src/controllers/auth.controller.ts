@@ -165,13 +165,10 @@ export async function otpVerification(req: Request, res: Response) {
     const client = await pool.connect();
     try {
         const { otp }: OtpToken = req.body;
-        console.log(otp);
         const { otpToken } = req.cookies;
-        console.log(otpToken)
         let decoded
         try {
             decoded = jwt.verify(otpToken, JWT_SECRET);
-            console.log(decoded)
         } catch {
             return res.status(401).json({ error: "Invalid or expired token. Please try again." })
         }
@@ -183,8 +180,7 @@ export async function otpVerification(req: Request, res: Response) {
         ) return res.status(401).json({ error: "Invalid registration token." });
 
         const { userId, purpose } = decoded;
-        console.log(purpose)
-        if (purpose !== "continue-registration") return res.status(403).json({ error: "Invalid session token." })
+        if (purpose !== "continue-registration" && purpose !== "registration") return res.status(403).json({ error: "Invalid session token." })
 
         await client.query("BEGIN");
         const hasUser = await client.query(
