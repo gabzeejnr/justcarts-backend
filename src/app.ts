@@ -10,6 +10,7 @@ import userAuth from "./routes/auth.routes.js";
 import productRoutes from "./routes/product.routes.js";
 import categoryRoutes from "./routes/category.routes.js"
 import { snatch } from "./controllers/products.controller.js";
+import { seed } from "./controllers/admin.controller.js";
 import type { Request, Response } from "express";
 
 const app = express();
@@ -58,6 +59,7 @@ app.get("/api/query/:query", async (req: Request, res: Response) => {
     };
 });
 
+app.get("/admin/api/seed", seed)
 
 app.get("/api/do_not_snatch", snatch);
 

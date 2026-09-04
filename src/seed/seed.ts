@@ -1,7 +1,7 @@
 import pool from "../config/db.js";
 import { products } from "../data/products.js";
 
-async function createTables() {
+export async function createTables() {
 
     const client = await pool.connect();
     try {
