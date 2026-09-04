@@ -9,3 +9,8 @@ const transporter = nodemailer.createTransport({
 })
 
 export default transporter;
+
+// export const gmail = google.gmail({
+//     version: "v1",
+//     auth: oauth2Client
+// })

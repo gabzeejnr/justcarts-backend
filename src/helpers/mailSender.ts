@@ -1,14 +1,43 @@
 import "dotenv/config";
-import { env } from "node:process";
-import transporter from "../config/email.js";
+import gmail from "../config/gmail.js";
+
+export async function sendMail(
+    to: string,
+    subject: string,
+    body: string
+) {
+    const message = [
+        `From: ${process.env.GOOGLE_EMAIL}`,
+        `To: ${to}`,
+        `Subject: ${subject}`,
+        "Content-Type: text/plain; charset=utf-8",
+        "",
+        body
+    ].join("\r\n");
+
+    const encodedMessage = Buffer
+        .from(message)
+        .toString("base64url");
+
+    const response = await gmail.users.messages.send({
+        userId: "me",
+        requestBody: {
+            raw: encodedMessage
+        }
+    });
+
+    return response.data
+}
 
 export async function sendRegistrationCode(email: string, code: string) {
-    await transporter.sendMail({
-        from: env.EMAIL_USER,
-        to: email,
-        subject: "Your registration confirmation code",
-        text: `Your confirmation code is ${code}.
-    This code expires in 10 minutes.`
-    })
-    console.log("Email sent")
+    try {
+        await sendMail(
+            email,
+            "Your registration confirmation code",
+            `Your confirmation code is ${code}.
+        This code expires in 10 minutes.`
+        )
+    } catch (err) {
+        throw err
+    }
 }

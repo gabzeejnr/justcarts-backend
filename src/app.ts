@@ -6,9 +6,11 @@ import pool from "./config/db.js";
 // import bcrypt from "bcrypt";
 // import jwt from "jsonwebtoken";
 // import { JWT_SECRET } from "./config/env.js";
+import testApi from "./routes/test.routes.js"
+import googleAuth from "./routes/google.auth.routes.js";
 import userAuth from "./routes/auth.routes.js";
 import productRoutes from "./routes/product.routes.js";
-import categoryRoutes from "./routes/category.routes.js"
+import categoryRoutes from "./routes/category.routes.js";
 import { snatch } from "./controllers/products.controller.js";
 import { seed } from "./controllers/admin.controller.js";
 import type { Request, Response } from "express";
@@ -25,10 +27,7 @@ app.use(cookieParser());
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
-const gabriel = await pool.query("SELECT * FROM users WHERE email = 'gabrieldodowei@gmail.com'");
-console.log(gabriel)
-console.log(await pool.query("SELECT * FROM codes"))
- 
+
 
 console.log(`// ================================================================================================
 // RUNNING ========================================================================================
@@ -38,7 +37,11 @@ app.get("/", (req: Request, res: Response) => {
     res.send("Root directory... Working??")
 });
 
-app.use("/api", userAuth);
+app.use("/test", testApi);
+
+app.use("/auth", googleAuth)
+
+app.use("/api/auth", userAuth);
 
 app.get("/api/users", async (req: Request, res: Response) => {
     const { rows } = await pool.query("SELECT * FROM users");
@@ -46,7 +49,7 @@ app.get("/api/users", async (req: Request, res: Response) => {
     res.status(200).json(rows)
 })
 
-app.use("/api", productRoutes);
+app.use("/api/products", productRoutes);
 
 app.use("/api", categoryRoutes);
 

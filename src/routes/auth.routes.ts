@@ -7,10 +7,10 @@ import { authenticate } from "../middleware/auth.middleware.js";
 
 const router = Router();
 
-router.post("/auth/register", registerUser);
-router.post("/auth/send_registration_code", sendOtp);
-router.post("/auth/otp_verification", otpVerification)
-router.post("/auth/login", loginUser);
-router.get("/auth/me", authenticate, authenticateMe);
+router.post("/register", registerUser);
+router.post("/send_registration_code", sendOtp);
+router.post("/otp_verification", otpVerification)
+router.post("/login", loginUser);
+router.get("/me", authenticate, authenticateMe);
 
 export default router;
