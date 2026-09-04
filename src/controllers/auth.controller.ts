@@ -84,6 +84,7 @@ export async function sendOtp(req: Request, res: Response) {
             expectedPurpose = "continue-registration";
             sessionCookie = "continueRegistration";
         } else {
+            console.log("Registration cookie:", req.cookies.registrationToken);
             return res.status(401).json({
                 error: "No active registration session."
             });
