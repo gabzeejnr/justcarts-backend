@@ -6,7 +6,7 @@ function requireEnv(env: any): string {
     return env;
 }
 const JWT_SECRET = requireEnv(env.JWT_SECRET);
-const DB_PORT = Number(requireEnv(env.DB_HOST));
+const DB_PORT = Number(requireEnv(env.DB_PORT));
 const CLOUDINARY_API_KEY = requireEnv(env.CLOUDINARY_API_KEY);
 const CLOUDINARY_API_SECRET = requireEnv(env.CLOUDINARY_API_SECRET);
 const CLOUDINARY_CLOUD_NAME = requireEnv(env.CLOUDINARY_CLOUD_NAME);
