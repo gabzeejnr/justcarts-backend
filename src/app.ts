@@ -15,13 +15,17 @@ import type { Request, Response } from "express";
 
 const app = express();
 app.use(cors({
-    origin: "http://localhost:5173",
+    origin: "https://justcarts.vercel.app",
     credentials: true
 }));
 app.use(cookieParser());
 app.use(express.json());
 
 const PORT = process.env.PORT || 5000;
+const gabriel = await pool.query("SELECT * FROM users WHERE email = 'gabrieldodowei@gmail.com'");
+console.log(gabriel)
+console.log(await pool.query("SELECT * FROM codes"))
+ 
 
 console.log(`// ================================================================================================
 // RUNNING ========================================================================================

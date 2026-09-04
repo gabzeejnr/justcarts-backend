@@ -11,7 +11,7 @@ export function setTokenCookie(
     res.cookie(tokenName, token, {
         httpOnly: true,
         secure: env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "none",
         maxAge
     })
 }
@@ -23,6 +23,6 @@ export function clearTokenCookie(
     res.clearCookie(tokenName, {
         httpOnly: true,
         secure: env.NODE_ENV === "production",
-        sameSite: "strict"
+        sameSite: "none"
     })
 }
