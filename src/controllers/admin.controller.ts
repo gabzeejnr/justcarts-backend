@@ -34,18 +34,18 @@ export async function seed(req: Request, res: Response) {
                 );
 
                 await client.query("COMMIT")
-                console.log(`${index + 1} out of ${products.length} items uploaded`)
+                console.log(`${index + 1} out of ${products.length} items uploaded`);
             } catch (err) {
                 await client.query("ROLLBACK")
                 throw err;
             }
         }
-        console.log("Data seeded successfully🚀🚀🚀")
+        console.log("Data seeded successfully🚀🚀🚀");
+        return res.status(200).json({ message: `Seeding done for ${products.length}` })
     } catch (err) {
         console.error("Seeding failed:", err);
     } finally {
         client.release()
         console.log("Seeding done...");
-        await pool.end();
     }
 }

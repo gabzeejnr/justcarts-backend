@@ -5,14 +5,9 @@ export async function createTables() {
 
     const client = await pool.connect();
     try {
-
-        await client.query("DROP TABLE IF EXISTS images CASCADE;");
-        await client.query("DROP TABLE IF EXISTS products CASCADE;");
-        console.log("Old tables dropped cleanly (if they existed)");
-
         await client.query("BEGIN");
         await client.query(
-            `CREATE TABLE products (
+            `CREATE TABLE IF NOT EXISTS products (
                 id SERIAL PRIMARY KEY,
         		snatch_id INTEGER,
                 source VARCHAR(50) NOT NULL DEFAULT 'gabzeejnr',
@@ -30,23 +25,16 @@ export async function createTables() {
                 minimum_orderQuantity NUMERIC
             )`
         )
-        console.log("Products table created");
 
         await client.query(
-            "ALTER TABLE products ADD CONSTRAINT unique_source_snatch UNIQUE (source, snatch_id)"
-        );
-        console.log("Constraint added to product table");
-
-        await client.query(
-            `CREATE TABLE images (
+            `CREATE TABLE IF NOT EXISTS images (
                 id SERIAL PRIMARY KEY,
                 product_id INTEGER NOT NULL REFERENCES products (id),
                 image TEXT
             )`
         )
 
-        await client.query("COMMIT")
-        console.log("Images table created")
+        console.log("Tables ready!")
     } catch (err) {
         await client.query("ROLLBACK")
         console.error("Couldn't create TABLES");
@@ -56,7 +44,7 @@ export async function createTables() {
     }
 }
 
-async function seed() {
+export async function seed() {
     await createTables();
     const client = await pool.connect();
     try {
@@ -103,5 +91,3 @@ async function seed() {
         await pool.end();
     }
 }
-
-seed();
