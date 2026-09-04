@@ -15,7 +15,10 @@ import type { Request, Response } from "express";
 
 const app = express();
 app.use(cors({
-    origin: "https://justcarts.vercel.app",
+    origin: [
+        "http://localhost:5173",
+        "https://justcarts.vercel.app"
+    ],
     credentials: true
 }));
 app.use(cookieParser());
